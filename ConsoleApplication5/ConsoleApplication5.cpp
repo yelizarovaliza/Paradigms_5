@@ -27,9 +27,19 @@ public:
         string buffer;
         bool lastWasOperator = true;
 
-        for (char c : expression) {
+        for (size_t i = 0; i < expression.size(); ++i) {
+            char c = expression[i];
             if (isdigit(c) || c == '.') {
                 buffer.push_back(c);
+                lastWasOperator = false;
+            }
+            else if (isalpha(c)) {
+                buffer.push_back(c);
+                while (i + 1 < expression.size() && isalpha(expression[i + 1])) {
+                    buffer.push_back(expression[++i]);
+                }
+                result.push_back(buffer);
+                buffer.clear();
                 lastWasOperator = false;
             }
             else {
@@ -55,12 +65,13 @@ public:
 
         return result;
     }
-    static bool IsFunction(string func) {
-        transform(func.begin(), func.end(), func.begin(), ::tolower);
-        return func == "pow" || func == "abs" || func == "min" || func == "max" || func == "var";
+
+    static bool IsFunction(const string& func) {
+        string lowerFunc = func;
+        transform(lowerFunc.begin(), lowerFunc.end(), lowerFunc.begin(), ::tolower);
+        return lowerFunc == "pow" || lowerFunc == "abs" || lowerFunc == "min" || lowerFunc == "max";
     }
 };
-
 
 // ShuntingYard
 class ShuntingYard {
@@ -76,10 +87,10 @@ public:
 private:
     static string ConvertToPostfix() {
         unordered_map<string, int> precedence = {
-            {"pow", 3}, {"abs", 3}, {"max", 3}, {"min", 3},
-            {"*", 2}, {"/", 2},
-            {"+", 1}, {"-", 1},
-            {"(", 0}
+            {"pow", 4}, {"abs", 4}, {"max", 4}, {"min", 4},
+            {"*", 3}, {"/", 3},
+            {"+", 2}, {"-", 2},
+            {"(", 1}
         };
 
         stack<string> operatorStack;
@@ -94,18 +105,12 @@ private:
         cout << endl;
 
         for (const auto& token : tokens) {
-            string func;
             if (isalpha(token[0])) {
-                func = token;
-                while (!operatorStack.empty() && operatorStack.top() == "(") {
-                    func += operatorStack.top();
-                    operatorStack.pop();
-                }
-                if (Tokenizer::IsFunction(func)) {
-                    operatorStack.push(func);
+                if (Tokenizer::IsFunction(token)) {
+                    operatorStack.push(token);
                 }
                 else {
-                    throw runtime_error("Invalid function: " + func);
+                    throw runtime_error("Invalid function: " + token);
                 }
             }
             else if (isdigit(token[0]) || (token.size() > 1 && token[0] == '-' && isdigit(token[1]))) {
@@ -119,7 +124,19 @@ private:
                     outputQueue.push(operatorStack.top());
                     operatorStack.pop();
                 }
-                operatorStack.pop();
+                if (!operatorStack.empty() && operatorStack.top() == "(") {
+                    operatorStack.pop();
+                }
+                if (!operatorStack.empty() && Tokenizer::IsFunction(operatorStack.top())) {
+                    outputQueue.push(operatorStack.top());
+                    operatorStack.pop();
+                }
+            }
+            else if (token == ",") {
+                while (!operatorStack.empty() && operatorStack.top() != "(") {
+                    outputQueue.push(operatorStack.top());
+                    operatorStack.pop();
+                }
             }
             else {
                 while (!operatorStack.empty() && precedence[token] <= precedence[operatorStack.top()]) {
@@ -157,10 +174,20 @@ private:
                 operandStack.push(stod(token));
             }
             else if (Tokenizer::IsFunction(token)) {
-                double operand = operandStack.top();
+                double operand1 = operandStack.top();
                 operandStack.pop();
-                double result = EvaluateFunction(token, operand);
-                operandStack.push(result);
+
+                if (token == "abs") {
+                    operandStack.push(abs(operand1));
+                }
+                else {
+                    double operand2 = operandStack.top();
+                    operandStack.pop();
+
+                    if (token == "min") operandStack.push(min(operand1, operand2));
+                    else if (token == "max") operandStack.push(max(operand1, operand2));
+                    else if (token == "pow") operandStack.push(pow(operand2, operand1));
+                }
             }
             else {
                 double operand2 = operandStack.top();
@@ -172,23 +199,11 @@ private:
                 else if (token == "-") operandStack.push(operand1 - operand2);
                 else if (token == "*") operandStack.push(operand1 * operand2);
                 else if (token == "/") operandStack.push(operand1 / operand2);
-                else if (token == "pow") operandStack.push(pow(operand1, operand2));
-                else if (token == "abs") operandStack.push(abs(operand1));
-                else if (token == "min") operandStack.push(min(operand1, operand2));
-                else if (token == "max") operandStack.push(max(operand1, operand2));
-                else throw runtime_error("Invalid operator or function: " + token);
+                else throw runtime_error("Invalid operator: " + token);
             }
         }
-        
 
         return operandStack.top();
-    }
-    static double EvaluateFunction(const string & functionName, double operand) {
-        string lowerFunctionName = functionName;
-        transform(lowerFunctionName.begin(), lowerFunctionName.end(), lowerFunctionName.begin(), ::tolower);
-
-        if (lowerFunctionName == "abs") return abs(operand);
-        else throw runtime_error("Invalid function: " + functionName);
     }
 };
 
