@@ -83,11 +83,11 @@ public:
         stack<string> operatorStack;
         queue<string> outputQueue;
 
-        cout << "Tokenization: ";
+        /*cout << "Tokenization: ";
         for (const auto& token : tokens) {
             cout << token << ", ";
         }
-        cout << endl;
+        cout << endl;*/
 
         for (const auto& token : tokens) {
             if (isalpha(token[0])) {
@@ -252,7 +252,7 @@ void HandleVariableDeclaration(const string& expression) {
         string postfixExpression = ShuntingYard::ConvertToPostfix(tokens);
         double value = ShuntingYard::EvaluatePostfix(postfixExpression);
         variableMap[varName] = value;
-        cout << "Variable " << varName << " = " << value << endl;
+        //cout << "Variable " << varName << " = " << value << endl;
     }
     else {
         throw runtime_error("Invalid variable declaration");
@@ -290,7 +290,7 @@ void HandleFunctionDefinition(const string& expression) {
         }
 
         functionMap[funcName] = make_pair(params, funcBody);
-        cout << "Function " << funcName << " defined" << endl;
+        //cout << "Function " << funcName << " defined" << endl;
     }
     else {
         throw runtime_error("Invalid function definition");
