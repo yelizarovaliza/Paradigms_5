@@ -301,7 +301,8 @@ int main() {
     try {
         string input;
         while (true) {
-            cout << "Enter expression (or type 'exit' to quit): ";
+            string input;
+            // cout << "Enter expression (or type 'exit' to quit): ";
             getline(cin, input);
             if (input == "exit") {
                 break;

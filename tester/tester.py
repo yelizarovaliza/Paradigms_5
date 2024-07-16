@@ -8,27 +8,40 @@ def run_cpp_program(input_data):
         stderr=subprocess.PIPE,
         text=True
     )
+    
+    # output_lines = stdout.strip().split("\n")
+    # filtered_output_lines = [line for line in output_lines if not line.startswith("Enter expression (or type 'exit' to quit):")]
+    # filtered_output = "\n".join(filtered_output_lines).strip()
+    
     stdout, stderr = process.communicate(input_data)
-    
-    output_lines = stdout.strip().split("\n")
-    filtered_output_lines = [line for line in output_lines if not line.startswith("Enter expression (or type 'exit' to quit):")]
-    filtered_output = "\n".join(filtered_output_lines).strip()
-    
-    if "Error" in filtered_output:
-        stderr = filtered_output
-    
-    return filtered_output, stderr.strip()
+    return stdout.strip(), stderr.strip()
 
 def test_cpp_program():
     tests = [
         {
-            "input": "var a = 5\na + 10\n",
+           "input": "max(min(3 * 2, 2), 2)\nexit\n",
+           "expected_output": "Result: 2"
+        },
+        
+        {
+            "input": "var a = 5\na + 10\nexit\n",
             "expected_output": "Result: 15"
         },
+        
+        {
+            "input": "var a = 4\nvar b = a + 9\nb + 10\nexit\n",
+            "expected_output": "Result: 23"
+        },
+        
         {
             "input": "def myfunc(a, b) { min(a, b) + max(a, b) }\nmyfunc(3, 4)\nexit\n",
             "expected_output": "Result: 7"
         },
+        
+        {
+           "input": "def myfunc(a, b) { min(a, b) + max(a, b) }\nvar a = 5\nvar b = 6\nmyfunc(a, b)\nexit\n ",
+           "expected_output": "Result: 11"
+        }
     ]
     for test in tests:
         input_data = test["input"]
